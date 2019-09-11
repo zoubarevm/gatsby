@@ -4,7 +4,7 @@ const chalk = require(`chalk`)
 const normalize = require(`./normalize`)
 const { formatPluginOptionsForCLI } = require(`./plugin-options`)
 
-module.exports = async ({ reporter, pluginConfig }) => {
+module.exports = async ({ syncToken, reporter, pluginConfig }) => {
   // Fetch articles.
   console.time(`Fetch Contentful data`)
 
@@ -67,7 +67,7 @@ ${formatPluginOptionsForCLI(pluginConfig.getOriginalPluginOptions(), errors)}`)
 
   let currentSyncData
   try {
-    let query = { initial: true } // always initial to be able to resolve links
+    let query = syncToken ? { nextSyncToken: syncToken } : { initial: true }
     currentSyncData = await client.sync(query)
   } catch (e) {
     reporter.panic(`Fetching contentful data failed`, e)
