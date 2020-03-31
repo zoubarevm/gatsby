@@ -148,6 +148,22 @@ export const addResolvedNodes = (
 }
 
 /**
+ * Resolve all given nodes
+ */
+export const resolveNodes = (nodes: Array<IGatsbyNode>) => {
+  const { resolvedNodesCache } = store.getState()
+
+  nodes.forEach(node => {
+    // There can be a filter that targets `__gatsby_resolved` so fix that first
+    if (!node.__gatsby_resolved) {
+      const typeName = node.internal.type
+      const resolvedNodes = resolvedNodesCache.get(typeName)
+      node.__gatsby_resolved = resolvedNodes?.get(node.id)
+    }
+  })
+}
+
+/**
  * Given a ("flat") filter path leading up to "eq", a set of node types, and a
  * cache, create a cache that for each resulting value of the filter contains
  * all the Nodes in a Set (or, if the property is `id`, just the Nodes).

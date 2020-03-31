@@ -17,6 +17,8 @@ const {
   getNodesByTypedChain,
   addResolvedNodes,
   getNode: siftGetNode,
+  getNodesByType,
+  resolveNodes,
 } = require(`./nodes`)
 
 /////////////////////////////////////////////////////////////////////
@@ -276,6 +278,15 @@ const applyFilters = (
     if (filters.length > 1) {
       stats.totalNonSingleFilters++
     }
+  }
+
+  if (!filters.length && nodeTypeNames.length === 1) {
+    // No filters with one type. Return the cached array of nodes by type.
+    const nodes = getNodesByType(nodeTypeNames[0])
+    // Must resolve them first (there is a test)
+    resolveNodes(nodes)
+
+    return nodes
   }
 
   const result = filterWithoutSift(filters, nodeTypeNames, typedKeyValueIndexes)
