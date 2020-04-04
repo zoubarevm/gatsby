@@ -15,13 +15,19 @@ enum MESSAGE_TYPES {
   JOB_NOT_WHITELISTED = `JOB_NOT_WHITELISTED`,
 }
 
-let activityForJobs: ActivityTracker|null = null
+let activityForJobs: ActivityTracker | null = null
 let activeJobs = 0
 let isListeningForMessages = false
 let hasShownIPCDisabledWarning = false
 
-const jobsInProcess: Map<string, {id: string, deferred: pDefer.DeferredPromise<object>}> = new Map()
-const externalJobsMap: Map<string, {job: InternalJob, deferred: pDefer.DeferredPromise<any>}> = new Map()
+const jobsInProcess: Map<
+  string,
+  { id: string; deferred: pDefer.DeferredPromise<object> }
+> = new Map()
+const externalJobsMap: Map<
+  string,
+  { job: InternalJob; deferred: pDefer.DeferredPromise<any> }
+> = new Map()
 
 export class WorkerError extends Error {
   constructor(message: string) {
@@ -49,13 +55,13 @@ function createFileHash(path: string): string {
   return hasha.fromFileSync(path, { algorithm: `sha1` })
 }
 
-interface BaseJobInterface {
+interface IBaseJob {
   name: string
   outputDir: string
   args: Record<string, any>
 }
 
-interface JobInputInterface {
+interface IJobInput {
   inputPaths: string[]
   plugin: {
     name: string
@@ -64,7 +70,7 @@ interface JobInputInterface {
   }
 }
 
-interface InternalJobInterface {
+interface IInternalJob {
   id: string
   contentDigest: string
   inputPaths: {
@@ -79,10 +85,10 @@ interface InternalJobInterface {
   }
 }
 
-export type JobInput = BaseJobInterface & JobInputInterface
-export type InternalJob = BaseJobInterface & InternalJobInterface
+export type JobInput = IBaseJob & IJobInput
+export type InternalJob = IBaseJob & IInternalJob
 
-let hasActiveJobs: pDefer.DeferredPromise<void>|null = null
+let hasActiveJobs: pDefer.DeferredPromise<void> | null = null
 
 function hasExternalJobsEnabled(): boolean {
   return (
@@ -95,8 +101,7 @@ function hasExternalJobsEnabled(): boolean {
  * Get the local worker function and execute it on the user's machine
  */
 async function runLocalWorker<T>(
-  workerFn: {({ inputPaths, outputDir, args,}: InternalJob): T
-  },
+  workerFn: { ({ inputPaths, outputDir, args }: InternalJob): T },
   job: InternalJob
 ): Promise<T> {
   await fs.ensureDir(job.outputDir)
@@ -321,8 +326,10 @@ export async function enqueueJob(job: InternalJob): Promise<object> {
 /**
  * Get in progress job promise
  */
-export function getInProcessJobPromise(contentDigest: string): Promise<object> {
-  return jobsInProcess.get(contentDigest)!.deferred.promise
+export function getInProcessJobPromise(
+  contentDigest: string
+): Promise<object> | undefined {
+  return jobsInProcess.get(contentDigest)?.deferred.promise
 }
 
 /**
@@ -342,7 +349,7 @@ export function waitUntilAllJobsComplete(): Promise<void> {
 export function isJobStale(
   job: Partial<InternalJob> & { inputPaths: InternalJob["inputPaths"] }
 ): boolean {
-  const areInputPathsStale = job.inputPaths.some((inputPath) => {
+  const areInputPathsStale = job.inputPaths.some(inputPath => {
     // does the inputPath still exists?
     if (!fs.existsSync(inputPath.path)) {
       return true
