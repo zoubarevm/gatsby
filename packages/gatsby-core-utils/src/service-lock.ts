@@ -49,7 +49,7 @@ export const getService = (
   const lockfilePath = path.join(lockfileDir, `${name}.lock`)
 
   try {
-    return fs.readFile(lockfilePath, `utf8`)
+    return fs.readFile(lockfilePath, `utf8`).catch(() => null)
   } catch (err) {
     return Promise.resolve(null)
   }
