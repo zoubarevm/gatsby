@@ -9,6 +9,7 @@ import report from "gatsby-cli/lib/reporter"
 import socket from "socket.io"
 import fs from "fs-extra"
 import { createServiceLock } from "gatsby-core-utils/dist/service-lock"
+import startRecipesServer from "gatsby-recipes/dist/graphql"
 import { startDevelopProxy } from "../utils/develop-proxy"
 import { IProgram } from "./types"
 
@@ -66,7 +67,10 @@ module.exports = async (program: IProgram): Promise<void> => {
   // Run the actual develop server on a random port, and the proxy on the program port
   // which users will access
   const proxyPort = program.port
-  const developPort = await getRandomPort()
+  const [statusServerPort, developPort] = await Promise.all([
+    getRandomPort(),
+    getRandomPort(),
+  ])
 
   const script = createControllableScript(report.stripIndent`
     const cmd = require("${developProcessPath}");
@@ -78,13 +82,12 @@ module.exports = async (program: IProgram): Promise<void> => {
     cmd(args);
   `)
 
+  await startRecipesServer(program.directory)
   const proxy = startDevelopProxy({
     proxyPort: proxyPort,
     targetPort: developPort,
     programPath: program.directory,
   })
-
-  const statusServerPort = await getRandomPort()
 
   const success = await createServiceLock(
     program.directory,
