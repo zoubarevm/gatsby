@@ -63,12 +63,16 @@ class ControllableScript {
   }
 }
 
-const createControllableScript = (script: string): ControllableScript => {
-  const controllableScript = new ControllableScript(script)
-  return controllableScript
-}
-
 module.exports = async (program: IProgram): Promise<void> => {
+  if (!process.env.EXPERIMENTAL_DEVELOP_RESTART_PROMPTS) {
+    // Do it the "old way" by simply running develop in this process
+    await require(`./develop-process`)({
+      ...program,
+      proxyPort: program.port,
+    })
+    return
+  }
+
   const developProcessPath = resolveCwd.silent(
     `gatsby/dist/commands/develop-process`
   )
@@ -77,7 +81,7 @@ module.exports = async (program: IProgram): Promise<void> => {
   const proxyPort = program.port
   const developPort = await getRandomPort()
 
-  const script = createControllableScript(report.stripIndent`
+  const script = new ControllableScript(report.stripIndent`
     const cmd = require("${developProcessPath}");
     const args = ${JSON.stringify({
       ...program,
